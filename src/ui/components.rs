@@ -1,19 +1,21 @@
+use std::borrow::Cow;
+
+use crate::{
+    app::{KeyEvent, Message},
+    config::{AppData, HoldBehaviorMode, KeyBehaviorMode, ModifierBehaviorMode},
+    constants::{MAX_INTERVAL_MS, MIN_INTERVAL_MS},
+    utils::handle_scroll_value,
+};
 use cosmic::{
     iced::Length,
-    widget::{button, Column, Container, Dropdown, MouseArea, Row, Slider, TextInput, Text},
+    widget::{button, Column, Container, Dropdown, MouseArea, Row, Slider, Text, TextInput},
     Element,
-};
-use crate::{
-    app::{Message, KeyEvent},
-    config::{AppData, KeyBehaviorMode, ModifierBehaviorMode, HoldBehaviorMode},
-    utils::handle_scroll_value,
-    constants::{MIN_INTERVAL_MS, MAX_INTERVAL_MS},
 };
 
 pub fn interval_controls(interval: f64, app_data: &AppData) -> Column<'static, Message> {
     let interval_value = format!("{}", app_data.interval_ms);
     let current_interval = app_data.interval_ms;
-    
+
     log::debug!("Building interval controls with value: {}", interval_value);
 
     let interval_input = MouseArea::new(
@@ -22,14 +24,14 @@ pub fn interval_controls(interval: f64, app_data: &AppData) -> Column<'static, M
             .on_submit(|value| Message::UpdateInterval(value))
             .padding(5)
             .width(Length::Fixed(60.0))
-            .size(16)
+            .size(16),
     )
     .on_scroll(move |delta| {
         Message::SetIntervalAndSave(handle_scroll_value(
             current_interval,
             delta,
             MIN_INTERVAL_MS as f32,
-            MAX_INTERVAL_MS as f32
+            MAX_INTERVAL_MS as f32,
         ))
     });
 
@@ -40,18 +42,18 @@ pub fn interval_controls(interval: f64, app_data: &AppData) -> Column<'static, M
 
     let interval_slider = MouseArea::new(
         Slider::new(
-            MIN_INTERVAL_MS as f64..=MAX_INTERVAL_MS as f64, 
-            interval, 
-            |value| Message::SetInterval(value as u64)
+            MIN_INTERVAL_MS as f64..=MAX_INTERVAL_MS as f64,
+            interval,
+            |value| Message::SetInterval(value as u64),
         )
-        .on_release(Message::SetIntervalAndSave(interval as u64))
+        .on_release(Message::SetIntervalAndSave(interval as u64)),
     )
     .on_scroll(move |delta| {
         Message::SetIntervalAndSave(handle_scroll_value(
             current_interval,
             delta,
             MIN_INTERVAL_MS as f32,
-            MAX_INTERVAL_MS as f32
+            MAX_INTERVAL_MS as f32,
         ))
     });
 
@@ -68,18 +70,18 @@ pub fn build_mouse_buttons() -> impl Into<Element<'static, Message>> {
             .push(
                 button::text("Left Click")
                     .on_press(Message::AddKey(KeyEvent::mouse_left()))
-                    .width(Length::Fixed(80.0))
+                    .width(Length::Fixed(80.0)),
             )
             .push(
                 button::text("Middle Click")
                     .on_press(Message::AddKey(KeyEvent::mouse_middle()))
-                    .width(Length::Fixed(95.0))
+                    .width(Length::Fixed(95.0)),
             )
             .push(
                 button::text("Right Click")
                     .on_press(Message::AddKey(KeyEvent::mouse_right()))
-                    .width(Length::Fixed(80.0))
-            )
+                    .width(Length::Fixed(80.0)),
+            ),
     )
     .width(Length::Fill)
     .padding(5)
@@ -94,37 +96,37 @@ where
     T: ToString,
     F: Fn(usize) -> Message + 'static + Send + Sync,
 {
-    let selected_index = choices.iter().position(|&mode| mode == current_mode.to_string());
-    Dropdown::new(choices, selected_index, map_fn)
+    let selected_index = choices
+        .iter()
+        .position(|&mode| mode == current_mode.to_string());
+    Dropdown::new(Cow::Borrowed(choices), selected_index, map_fn)
 }
 
-pub fn build_key_behavior_dropdown(current_mode: KeyBehaviorMode) -> Dropdown<'static, &'static str, Message, Message> {
+pub fn build_key_behavior_dropdown(
+    current_mode: KeyBehaviorMode,
+) -> Dropdown<'static, &'static str, Message, Message> {
     const KEY_BEHAVIORS: [&str; 2] = ["Click", "Hold"];
-    build_generic_dropdown(
-        &KEY_BEHAVIORS,
-        current_mode,
-        |index| match index {
-            0 => Message::UpdateKeyBehaviorMode(KeyBehaviorMode::Click),
-            1 => Message::UpdateKeyBehaviorMode(KeyBehaviorMode::Hold),
-            _ => Message::Noop,
-        },
-    )
+    build_generic_dropdown(&KEY_BEHAVIORS, current_mode, |index| match index {
+        0 => Message::UpdateKeyBehaviorMode(KeyBehaviorMode::Click),
+        1 => Message::UpdateKeyBehaviorMode(KeyBehaviorMode::Hold),
+        _ => Message::Noop,
+    })
 }
 
-pub fn build_hold_behavior_dropdown(current_mode: HoldBehaviorMode) -> Dropdown<'static, &'static str, Message, Message> {
+pub fn build_hold_behavior_dropdown(
+    current_mode: HoldBehaviorMode,
+) -> Dropdown<'static, &'static str, Message, Message> {
     const HOLD_BEHAVIOR_MODES: [&str; 2] = ["Continuous", "Cycle"];
-    build_generic_dropdown(
-        &HOLD_BEHAVIOR_MODES,
-        current_mode,
-        |index| match index {
-            0 => Message::UpdateHoldBehaviorMode(HoldBehaviorMode::Continuous),
-            1 => Message::UpdateHoldBehaviorMode(HoldBehaviorMode::Cycle),
-            _ => Message::Noop,
-        },
-    )
+    build_generic_dropdown(&HOLD_BEHAVIOR_MODES, current_mode, |index| match index {
+        0 => Message::UpdateHoldBehaviorMode(HoldBehaviorMode::Continuous),
+        1 => Message::UpdateHoldBehaviorMode(HoldBehaviorMode::Cycle),
+        _ => Message::Noop,
+    })
 }
 
-pub fn build_modifier_behavior_dropdown(current_mode: ModifierBehaviorMode) -> Dropdown<'static, &'static str, Message, Message> {
+pub fn build_modifier_behavior_dropdown(
+    current_mode: ModifierBehaviorMode,
+) -> Dropdown<'static, &'static str, Message, Message> {
     const MODIFIER_BEHAVIOR_MODES: [&str; 2] = ["Click", "Hold"];
     build_generic_dropdown(
         &MODIFIER_BEHAVIOR_MODES,
@@ -138,18 +140,28 @@ pub fn build_modifier_behavior_dropdown(current_mode: ModifierBehaviorMode) -> D
 }
 
 pub fn format_hotkey_text(
-    ctrl: bool, 
-    alt: bool, 
-    shift: bool, 
-    super_key: bool, 
+    ctrl: bool,
+    alt: bool,
+    shift: bool,
+    super_key: bool,
     key: Option<&str>,
 ) -> String {
     let mut parts = Vec::new();
-    if ctrl { parts.push("Ctrl"); }
-    if alt { parts.push("Alt"); }
-    if shift { parts.push("Shift"); }
-    if super_key { parts.push("Super"); }
-    if let Some(k) = key { parts.push(k); }
+    if ctrl {
+        parts.push("Ctrl");
+    }
+    if alt {
+        parts.push("Alt");
+    }
+    if shift {
+        parts.push("Shift");
+    }
+    if super_key {
+        parts.push("Super");
+    }
+    if let Some(k) = key {
+        parts.push(k);
+    }
     parts.join("+")
 }
 
@@ -159,7 +171,7 @@ pub fn build_start_button(is_running: bool) -> impl Into<Element<'static, Messag
     } else {
         ("Start", cosmic::theme::Button::Suggested)
     };
-    
+
     button::text(label)
         .on_press(Message::ToggleRunning)
         .class(class)
@@ -172,10 +184,10 @@ pub fn build_selected_keys_text(keys: &[String]) -> Element<'static, Message> {
     } else {
         keys.join(", ")
     };
-    
+
     // Create a owned string to avoid lifetime issues
     let keys_display = keys_text.clone();
-    
+
     cosmic::widget::container(
         Column::new()
             .push(Text::new(format!("Selected Keys ({}):", selected_count)).size(16))
@@ -183,12 +195,12 @@ pub fn build_selected_keys_text(keys: &[String]) -> Element<'static, Message> {
                 cosmic::widget::container(
                     Text::new(keys_display)
                         .width(Length::Fill)
-                        .wrapping(cosmic::iced_core::text::Wrapping::WordOrGlyph)
+                        .wrapping(cosmic::iced_core::text::Wrapping::WordOrGlyph),
                 )
                 .padding(10)
-                .width(Length::Fill)
+                .width(Length::Fill),
             )
-            .spacing(5)
+            .spacing(5),
     )
     .width(Length::Fill)
     .into()
